@@ -63,18 +63,18 @@ public class SignInActivity extends AppCompatActivity {
         });
 
         if (auth.getCurrentUser() != null) {
-            startActivity(new Intent(SignInActivity.this, MainActivity.class));
+            startActivity(new Intent(SignInActivity.this, UserListActivity.class));
         }
     }
 
     private void loginSignUpUser(String email, String password) {
 
         if (loginModeActive) {
-            if (passwordEditText.getText().toString().trim().length() < 7) {
-                Toast.makeText(this, "Passwords must be at least 7 characters",
-                        Toast.LENGTH_LONG).show();
-            } else if (emailEditText.getText().toString().trim().equals("")) {
+            if (emailEditText.getText().toString().trim().equals("")) {
                 Toast.makeText(this, "Please input your email",
+                        Toast.LENGTH_LONG).show();
+            } else if (passwordEditText.getText().toString().trim().length() < 7) {
+                Toast.makeText(this, "Passwords must be at least 7 characters",
                         Toast.LENGTH_LONG).show();
             } else {
                 auth.signInWithEmailAndPassword(email, password)
@@ -86,7 +86,7 @@ public class SignInActivity extends AppCompatActivity {
                                     FirebaseUser user = auth.getCurrentUser();
                                     //updateUI(user);
                                     Intent intent = new Intent(SignInActivity.this,
-                                            MainActivity.class);
+                                            UserListActivity.class);
                                     intent.putExtra("userName",
                                             nameEditText.getText().toString().trim());
                                     startActivity(intent);
@@ -103,15 +103,15 @@ public class SignInActivity extends AppCompatActivity {
                         });
             }
         } else {
-            if (!passwordEditText.getText().toString().trim().equals(
+            if (emailEditText.getText().toString().trim().equals("")) {
+                Toast.makeText(this, "Please input your email",
+                        Toast.LENGTH_LONG).show();
+            } else if (!passwordEditText.getText().toString().trim().equals(
                     repeatPasswordEditText.getText().toString().trim())) {
                 Toast.makeText(this, "Passwords don't match",
                         Toast.LENGTH_LONG).show();
             } else if (passwordEditText.getText().toString().trim().length() < 7) {
                 Toast.makeText(this, "Passwords must be at least 7 characters",
-                        Toast.LENGTH_LONG).show();
-            } else if (emailEditText.getText().toString().trim().equals("")) {
-                Toast.makeText(this, "Please input your email",
                         Toast.LENGTH_LONG).show();
             } else {
                 auth.createUserWithEmailAndPassword(email, password)
@@ -124,7 +124,7 @@ public class SignInActivity extends AppCompatActivity {
                                     createUser(user);
                                     //updateUI(user);
                                     Intent intent = new Intent(SignInActivity.this,
-                                            MainActivity.class);
+                                            UserListActivity.class);
                                     intent.putExtra("userName",
                                             nameEditText.getText().toString().trim());
                                     startActivity(intent);

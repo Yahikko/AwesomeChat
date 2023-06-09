@@ -7,16 +7,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -24,7 +20,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
@@ -41,11 +36,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity {
 
     private ListView messageListView;
     private AwesomeMessageAdapter adapter;
@@ -55,21 +49,36 @@ public class MainActivity extends AppCompatActivity {
     private EditText messageEditText;
 
     private String userName;
+    private String recipientUserId;
+    private String getRecipientUserName;
 
-    FirebaseDatabase database;
-    DatabaseReference messagesDatabaseReference;
-    ChildEventListener messagesChildEventListener;
+    private FirebaseDatabase database;
+    private DatabaseReference messagesDatabaseReference;
+    private ChildEventListener messagesChildEventListener;
 
-    DatabaseReference usersDatabaseReference;
-    ChildEventListener usersChildEventListener;
+    private DatabaseReference usersDatabaseReference;
+    private ChildEventListener usersChildEventListener;
 
-    FirebaseStorage storage;
-    StorageReference chatImagesStorageReference;
+    private FirebaseStorage storage;
+    private StorageReference chatImagesStorageReference;
+
+    private FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_chat);
+
+        auth = FirebaseAuth.getInstance();
+
+        Intent intent = getIntent();
+        if (intent != null) {
+            userName = intent.getStringExtra("userName");
+            recipientUserId = intent.getStringExtra("recipientUserId");
+            getRecipientUserName = intent.getStringExtra("recipientUserName");
+        }
+
+        setTitle("Chat With " + getRecipientUserName);
 
         database = FirebaseDatabase.getInstance();
         messagesDatabaseReference = database.getReference().child("messages");
@@ -77,21 +86,13 @@ public class MainActivity extends AppCompatActivity {
 
         storage = FirebaseStorage.getInstance();
 
-        Intent intent = getIntent();
-        if (intent != null) {
-            userName = intent.getStringExtra("userName");
-        } else {
-            userName = "Default User";
-        }
-
-        List<AwesomeMessage> awesomeMessages = new ArrayList<>();
-
         progressBar = findViewById(R.id.progressBar);
-        messageListView = findViewById(R.id.messageListView);
         sendImageButton = findViewById(R.id.sendPhotoButton);
         sendMessageButton = findViewById(R.id.sendMessageButton);
         messageEditText = findViewById(R.id.messageEditText);
 
+        messageListView = findViewById(R.id.messageListView);
+        List<AwesomeMessage> awesomeMessages = new ArrayList<>();
         adapter = new AwesomeMessageAdapter(this, R.layout.message_item, awesomeMessages);
         messageListView.setAdapter(adapter);
 
@@ -125,6 +126,8 @@ public class MainActivity extends AppCompatActivity {
                 AwesomeMessage message = new AwesomeMessage();
                 message.setText(messageEditText.getText().toString());
                 message.setName(userName);
+                message.setSender(auth.getCurrentUser().getUid());
+                message.setRecipient(recipientUserId);
                 message.setImageUrl(null);
 
                 messagesDatabaseReference.push().setValue(message);
@@ -158,9 +161,14 @@ public class MainActivity extends AppCompatActivity {
                             public void onComplete(@NonNull Task<Uri> task) {
                                 if (task.isSuccessful()) {
                                     Uri downloadUri = task.getResult();
+
                                     AwesomeMessage message = new AwesomeMessage();
+
                                     message.setName(userName);
                                     message.setImageUrl(downloadUri.toString());
+                                    message.setSender(auth.getCurrentUser().getUid());
+                                    message.setRecipient(recipientUserId);
+
                                     messagesDatabaseReference.push().setValue(message);
                                 } else {
                                     // Handle failures
@@ -217,8 +225,15 @@ public class MainActivity extends AppCompatActivity {
                                      @Nullable String previousChildName) {
 
                 AwesomeMessage message = snapshot.getValue(AwesomeMessage.class);
-
-                adapter.add(message);
+                if (message.getSender().equals(auth.getCurrentUser().getUid()) &&
+                        message.getRecipient().equals(recipientUserId)) {
+                    message.setMine(true);
+                    adapter.add(message);
+                } else if (message.getRecipient().equals(auth.getCurrentUser().getUid()) &&
+                        message.getSender().equals(recipientUserId)) {
+                    message.setMine(false);
+                    adapter.add(message);
+                }
             }
 
             @Override
@@ -263,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.sign_out:
                 FirebaseAuth.getInstance().signOut();
-                startActivity(new Intent(MainActivity.this, SignInActivity.class));
+                startActivity(new Intent(ChatActivity.this, SignInActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
