@@ -1,5 +1,6 @@
 package com.example.awesomechat;
 
+//Model for message
 public class AwesomeMessage {
 
     private String text;
@@ -38,4 +39,6 @@ public class AwesomeMessage {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
+
+
 }

@@ -45,8 +45,9 @@ public class AwesomeMessageAdapter extends ArrayAdapter<AwesomeMessage> {
         } else {
             messageTextView.setVisibility(View.GONE);
             photoImageView.setVisibility(View.VISIBLE);
-            Glide.with(photoImageView).load(message.getImageUrl())
-                    .load(photoImageView).into(photoImageView);
+            Glide.with(photoImageView.getContext())
+                    .load(message.getImageUrl())
+                    .into(photoImageView);
         }
 
         nameTextView.setText(message.getName());

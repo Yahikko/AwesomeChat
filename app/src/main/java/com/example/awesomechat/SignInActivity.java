@@ -16,6 +16,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class SignInActivity extends AppCompatActivity {
 
@@ -32,6 +34,9 @@ public class SignInActivity extends AppCompatActivity {
 
     private boolean loginModeActive = false;
 
+    FirebaseDatabase database;
+    DatabaseReference usersDatabaseReference;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +50,9 @@ public class SignInActivity extends AppCompatActivity {
         loginSignUpButton = findViewById(R.id.loginSignUpButton);
 
         auth = FirebaseAuth.getInstance();
+
+        database = FirebaseDatabase.getInstance();
+        usersDatabaseReference = database.getReference().child("users");
 
         loginSignUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -77,9 +85,11 @@ public class SignInActivity extends AppCompatActivity {
                                     Log.d(TAG, "signInWithEmail:success");
                                     FirebaseUser user = auth.getCurrentUser();
                                     //updateUI(user);
-
-                                    startActivity(new Intent(SignInActivity.this,
-                                            MainActivity.class));
+                                    Intent intent = new Intent(SignInActivity.this,
+                                            MainActivity.class);
+                                    intent.putExtra("userName",
+                                            nameEditText.getText().toString().trim());
+                                    startActivity(intent);
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Log.w(TAG, "signInWithEmail:failure",
@@ -111,10 +121,13 @@ public class SignInActivity extends AppCompatActivity {
                                 if (task.isSuccessful()) {
                                     Log.d(TAG, "createUserWithEmail:success");
                                     FirebaseUser user = auth.getCurrentUser();
+                                    createUser(user);
                                     //updateUI(user);
-
-                                    startActivity(new Intent(SignInActivity.this,
-                                            MainActivity.class));
+                                    Intent intent = new Intent(SignInActivity.this,
+                                            MainActivity.class);
+                                    intent.putExtra("userName",
+                                            nameEditText.getText().toString().trim());
+                                    startActivity(intent);
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Log.w(TAG, ":createUserWithEmailFailure",
@@ -130,6 +143,15 @@ public class SignInActivity extends AppCompatActivity {
         }
     }
 
+    private void createUser(FirebaseUser firebaseUser) {
+        User user = new User();
+        user.setId(firebaseUser.getUid());
+        user.setEmail(firebaseUser.getEmail());
+        user.setName(nameEditText.getText().toString().trim());
+
+        usersDatabaseReference.push().setValue(user);
+    }
+
     public void toggleLoginMode(View view) {
 
         if (loginModeActive) {
@@ -137,11 +159,13 @@ public class SignInActivity extends AppCompatActivity {
             loginSignUpButton.setText("Sign Up");
             toggleLoginSingUpTextView.setText("Or, Log In");
             repeatPasswordEditText.setVisibility(View.VISIBLE);
+            nameEditText.setVisibility(View.VISIBLE);
         } else {
             loginModeActive = true;
             loginSignUpButton.setText("Log In");
             toggleLoginSingUpTextView.setText("Or, Sign Up");
             repeatPasswordEditText.setVisibility(View.GONE);
+            nameEditText.setVisibility(View.GONE);
         }
     }
 }

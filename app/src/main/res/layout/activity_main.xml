@@ -13,6 +13,7 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/sendMessageLayout"
         android:divider="@android:color/transparent"
+        android:stackFromBottom="true"
         android:transcriptMode="alwaysScroll"
         tools:listitem="@layout/message_item" />
 
@@ -33,7 +34,10 @@
             android:id="@+id/messageEditText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:digits="ABCDEFGHIJKLMNOPQRSTUVWXYZ
+        abcdefghijklmnopqrstuvwxyz1234567890"
+            android:inputType="textFilter" />
 
         <Button
             android:id="@+id/sendMessageButton"
